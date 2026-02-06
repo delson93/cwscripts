@@ -70,8 +70,26 @@ restore_backup() {
     fi
 }
 
+# Function to fix permissions for MySQL folder
+fix_permissions() {
+    if [ -d "mysql" ]; then
+        echo "************************************************"
+        echo "Updating ownership and permissions for 'mysql' directory..."
+        
+        # Change ownership to app_name:www-data
+        chown -R "$app_name":www-data mysql/
+        
+        # Set file permissions to 644 inside mysql directory
+        chmod -R 644 mysql/*
+        
+        echo "Permissions updated: $app_name:www-data (644)"
+        echo "************************************************"
+    fi
+}
+
 # Main script flow
 list_backups
 convert_date_format
 restore_backup "mysql"
 restore_backup "web"
+fix_permissions
