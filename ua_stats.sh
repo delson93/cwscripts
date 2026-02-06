@@ -4,11 +4,38 @@
 LOG_FILES="*.access.log"
 TOP_N=10
 
+# --------------------------------------------------
+# 1. Extract Time Frame
+# --------------------------------------------------
+# Get the list of files to identify the first and last log files
+SORTED_FILES=$(ls $LOG_FILES 2>/dev/null | sort)
+
+if [ -z "$SORTED_FILES" ]; then
+    echo "No log files found matching $LOG_FILES"
+    exit 1
+fi
+
+# Pick the first and last file from the sorted list
+FIRST_FILE=$(echo "$SORTED_FILES" | head -n 1)
+LAST_FILE=$(echo "$SORTED_FILES" | tail -n 1)
+
+# Extract timestamp from the very first line of the first file
+# Format expected: [06/Feb/2026:10:51:05 +0000] -> we grab content inside []
+START_TIME=$(head -n 1 "$FIRST_FILE" | awk -F'[][]' '{print $2}')
+
+# Extract timestamp from the very last line of the last file
+END_TIME=$(tail -n 1 "$LAST_FILE" | awk -F'[][]' '{print $2}')
+
 echo "Processing logs..."
+echo "--------------------------------------------------"
+echo "Time Frame: $START_TIME -- $END_TIME"
 echo "--------------------------------------------------"
 printf "%-40s | %s\n" "User Agent" "Count"
 echo "--------------------------------------------------"
 
+# --------------------------------------------------
+# 2. Analyze User Agents
+# --------------------------------------------------
 # 1. awk extracts the 6th field (User Agent) from the logs.
 # 2. sed cleans the User Agent string (Order matters!):
 #    - Rule 1: Extract "compatible; BotName/1.0" (e.g., Pinterest, Google)
